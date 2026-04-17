@@ -392,8 +392,31 @@ function renderKid(i){
   let mh='';
   if(!p.meds.length)mh=`<div style="text-align:center;color:var(--text3);font-size:14px;padding:20px 0 8px;">No medications yet</div>`;
   else p.meds.forEach((m,mi)=>{
-    const t2=m.freq==='twice'?`<div class="fr"><span class="fl">Time 2</span><input type="time" value="${esc(m.time2||'')}" oninput="umed(${i},${mi},'time2',this.value)"></div>`:'';
-    mh+=`<div class="mce"><div class="mce-hdr"><span style="font-size:20px;">💊</span><span class="mce-name">${esc(m.name)||'New medication'}</span><button class="del-btn" onclick="delMed(${i},${mi})">×</button></div><div class="fgrp" style="border-radius:0;border:none;"><div class="fr"><span class="fl">Name</span><input type="text" value="${esc(m.name||'')}" placeholder="Medication name" oninput="umed(${i},${mi},'name',this.value)"</div><div class="fr"><span class="fl">Dose</span><input type="text" value="${esc(m.dose||'')}" placeholder="e.g. 5ml, 1 tablet" oninput="umed(${i},${mi},'dose',this.value)"></div><div class="fr"><span class="fl">Time</span><input type="time" value="${esc(m.time||'')}" oninput="umed(${i},${mi},'time',this.value)"></div><div class="fr"><span class="fl">Freq</span><select oninput="umed(${i},${mi},'freq',this.value)"><option value="daily" ${(!m.freq||m.freq==='daily')?'selected':''}>Daily</option><option value="twice" ${m.freq==='twice'?'selected':''}>Twice a day</option><option value="asneeded" ${m.freq==='asneeded'?'selected':''}>As needed</option><option value="weekly" ${m.freq==='weekly'?'selected':''}>Weekly</option></select></div>${t2}<div class="fr"><span class="fl">Notes</span><input type="text" value="${esc(m.notes||'')}" placeholder="With food, special instructions..." oninput="umed(${i},${mi},'notes',this.value)"></div></div></div>`;
+    const t2=m.freq==='twice'?`
+      <div class="fr"><span class="fl">Time 2</span><input type="time" value="${esc(m.time2||'')}" oninput="umed(${i},${mi},'time2',this.value)"></div>`:'';
+    mh+=`
+      <div class="mce">
+        <div class="mce-hdr">
+          <span style="font-size:20px;">💊</span>
+          <span class="mce-name">${esc(m.name)||'New medication'}</span>
+          <button class="del-btn" onclick="delMed(${i},${mi})">×</button>
+        </div>
+        <div class="fgrp" style="border-radius:0;border:none;">
+          <div class="fr"><span class="fl">Name</span><input type="text" value="${esc(m.name||'')}" placeholder="Medication name" oninput="umed(${i},${mi},'name',this.value)"></div>
+          <div class="fr"><span class="fl">Dose</span><input type="text" value="${esc(m.dose||'')}" placeholder="e.g. 5ml, 1 tablet" oninput="umed(${i},${mi},'dose',this.value)"></div>
+          <div class="fr"><span class="fl">Time</span><input type="time" value="${esc(m.time||'')}" oninput="umed(${i},${mi},'time',this.value)"></div>
+          <div class="fr"><span class="fl">Freq</span>
+            <select oninput="umed(${i},${mi},'freq',this.value)">
+              <option value="daily"    ${(!m.freq||m.freq==='daily')   ?'selected':''}>Daily</option>
+              <option value="twice"    ${m.freq==='twice'              ?'selected':''}>Twice a day</option>
+              <option value="asneeded" ${m.freq==='asneeded'           ?'selected':''}>As needed</option>
+              <option value="weekly"   ${m.freq==='weekly'             ?'selected':''}>Weekly</option>
+            </select>
+          </div>
+          ${t2}
+          <div class="fr"><span class="fl">Notes</span><input type="text" value="${esc(m.notes||'')}" placeholder="With food, special instructions..." oninput="umed(${i},${mi},'notes',this.value)"></div>
+        </div>
+      </div>`;
   });
   const delPersonBtn=S.people.length>1?`<button class="del-person-btn" onclick="delPerson(${i})">Remove this person</button>`:'';
   panel.innerHTML=`<div class="av-row"><div class="av ${AVC[avIdx]}" id="av${i}">${init}</div><input type="text" value="${esc(p.name||'')}" placeholder="Enter name" style="flex:1;border:none;outline:none;font-size:18px;font-weight:600;color:var(--text);background:transparent;font-family:inherit;" oninput="uname(${i},this.value)"></div><div class="slbl">Medications</div>${mh}<button class="add-btn" onclick="addMed(${i})">+ Add Medication</button><button class="save-btn" onclick="saveKid(${i})">Save</button>${delPersonBtn}`;
