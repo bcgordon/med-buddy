@@ -273,6 +273,7 @@ function kp(v){
 function udots(err){for(let i=0;i<4;i++){const d=document.getElementById('d'+i);d.classList.toggle('on',!err&&i<pinEntry.length);d.classList.toggle('err',err);}}
 function chkPin(){
   if(pinEntry===getPin()){
+    sessionStorage.setItem('mb_unlocked','1');
     document.getElementById('lock').style.display='none';
     document.getElementById('shell').classList.add('on');
     initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();
@@ -281,7 +282,8 @@ function chkPin(){
     setTimeout(()=>{pinEntry='';udots(false);},700);
   }
 }
-function lockApp(){pinEntry='';udots(false);document.getElementById('perr').textContent='';document.getElementById('lock').style.display='flex';document.getElementById('shell').classList.remove('on');}
+function lockApp(){pinEntry='';udots(false);document.getElementById('perr').textContent='';sessionStorage.removeItem('mb_unlocked');document.getElementById('lock').style.display='flex';document.getElementById('shell').classList.remove('on');}
+function renderAll(){initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();}
 
 // NAV
 function goPage(p){['today','kids','notif','settings'].forEach(x=>{document.getElementById('pg-'+x).classList.toggle('on',x===p);document.getElementById('nav-'+x).classList.toggle('on',x===p);});if(p==='kids')renderKidsPage();if(p==='notif')renderNotif();if(p==='settings')renderSettings();}
@@ -534,6 +536,20 @@ const today=todayKey();
 if(lastDay&&lastDay!==today){S.checks={};saveS();}
 localStorage.setItem('mb_day_v3',today);
 schedMidnight();
-</script>
+
+// Auto-unlock if session is still active (app was backgrounded, not closed)
+if(sessionStorage.getItem('mb_unlocked')==='1'){
+  document.getElementById('lock').style.display='none';
+  document.getElementById('shell').classList.add('on');
+  renderAll();
+}
+
+// Keep session alive while app is open; clear lock screen on visibility restore
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && sessionStorage.getItem('mb_unlocked')==='1'){
+    document.getElementById('lock').style.display='none';
+    document.getElementById('shell').classList.add('on');
+  }
+});</script>
 </body>
 </html>
