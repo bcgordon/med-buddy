@@ -126,6 +126,19 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 
 .fgrp{background:white;border-radius:16px;border:1px solid #EEECEA;overflow:hidden;margin-bottom:12px;}
 .fr{display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #F5F4F0;}
+.scan-btn{background:var(--pink-l);border:1.5px solid var(--pink-m);color:var(--pink-d);border-radius:8px;padding:5px 9px;font-size:15px;cursor:pointer;flex-shrink:0;line-height:1;margin-left:6px;transition:background .12s,transform .1s;}
+.scan-btn:active{background:var(--pink);color:white;transform:scale(.93);}
+.scan-btn.loading{opacity:.6;pointer-events:none;}
+.scan-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.scan-card{background:white;border-radius:20px;padding:22px 24px;width:calc(100% - 48px);max-width:340px;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.scan-preview{width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:1.5px solid #EEECEA;display:none;}
+.scan-status{font-size:13px;color:var(--text2);text-align:center;min-height:18px;}
+.scan-actions{display:flex;gap:10px;width:100%;}
+.scan-actions button{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.scan-use{background:var(--pink);color:white;}
+.scan-use:active{background:var(--pink-d);}
+.scan-retry{background:var(--bg);color:var(--text2);border:1.5px solid #EEECEA !important;}
+.scan-cancel{background:var(--bg);color:var(--text2);border:1.5px solid #EEECEA !important;}
 .fr:last-child{border-bottom:none;}
 .fl{font-size:11px;color:var(--text3);width:46px;flex-shrink:0;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
 .fr input,.fr select{flex:1;border:none;outline:none;padding:13px 0 13px 10px;font-size:15px;color:var(--text);background:transparent;font-family:inherit;min-width:0;}
@@ -239,6 +252,22 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 </div>
 
 <div class="toast" id="toast"></div>
+<input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="onCamCapture(event)">
+<div class="scan-overlay" id="scan-overlay" style="display:none;">
+  <div class="scan-card">
+    <div style="font-size:28px;">📷</div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);" id="scan-title">Reading pill bottle…</div>
+    <img id="scan-preview" class="scan-preview">
+    <div class="scan-status" id="scan-status"></div>
+    <div class="scan-actions" id="scan-actions" style="display:none;">
+      <button class="scan-retry" onclick="retryScan()">↺ Retake</button>
+      <button class="scan-use" id="scan-use-btn" onclick="useScanResult()">Use this ✓</button>
+    </div>
+    <div class="scan-actions">
+      <button class="scan-cancel" onclick="closeScan()">Cancel</button>
+    </div>
+  </div>
+</div>
 </div>
 <script>
 let S={people:[{name:'',meds:[]}],checks:{},notifEnabled:{}};
@@ -371,7 +400,7 @@ function renderKid(i){
   if(!p.meds.length)mh=`<div style="text-align:center;color:var(--text3);font-size:14px;padding:20px 0 8px;">No medications yet</div>`;
   else p.meds.forEach((m,mi)=>{
     const t2=m.freq==='twice'?`<div class="fr"><span class="fl">Time 2</span><input type="time" value="${esc(m.time2||'')}" oninput="umed(${i},${mi},'time2',this.value)"></div>`:'';
-    mh+=`<div class="mce"><div class="mce-hdr"><span style="font-size:20px;">💊</span><span class="mce-name">${esc(m.name)||'New medication'}</span><button class="del-btn" onclick="delMed(${i},${mi})">×</button></div><div class="fgrp" style="border-radius:0;border:none;"><div class="fr"><span class="fl">Name</span><input type="text" value="${esc(m.name||'')}" placeholder="Medication name" oninput="umed(${i},${mi},'name',this.value)"></div><div class="fr"><span class="fl">Dose</span><input type="text" value="${esc(m.dose||'')}" placeholder="e.g. 5ml, 1 tablet" oninput="umed(${i},${mi},'dose',this.value)"></div><div class="fr"><span class="fl">Time</span><input type="time" value="${esc(m.time||'')}" oninput="umed(${i},${mi},'time',this.value)"></div><div class="fr"><span class="fl">Freq</span><select oninput="umed(${i},${mi},'freq',this.value)"><option value="daily" ${(!m.freq||m.freq==='daily')?'selected':''}>Daily</option><option value="twice" ${m.freq==='twice'?'selected':''}>Twice a day</option><option value="asneeded" ${m.freq==='asneeded'?'selected':''}>As needed</option><option value="weekly" ${m.freq==='weekly'?'selected':''}>Weekly</option></select></div>${t2}<div class="fr"><span class="fl">Notes</span><input type="text" value="${esc(m.notes||'')}" placeholder="With food, special instructions..." oninput="umed(${i},${mi},'notes',this.value)"></div></div></div>`;
+    mh+=`<div class="mce"><div class="mce-hdr"><span style="font-size:20px;">💊</span><span class="mce-name">${esc(m.name)||'New medication'}</span><button class="del-btn" onclick="delMed(${i},${mi})">×</button></div><div class="fgrp" style="border-radius:0;border:none;"><div class="fr"><span class="fl">Name</span><input type="text" value="${esc(m.name||'')}" placeholder="Medication name" oninput="umed(${i},${mi},'name',this.value)" id="mname-${i}-${mi}"><button class="scan-btn" onclick="startScan(${i},${mi})">📷</button></div><div class="fr"><span class="fl">Dose</span><input type="text" value="${esc(m.dose||'')}" placeholder="e.g. 5ml, 1 tablet" oninput="umed(${i},${mi},'dose',this.value)"></div><div class="fr"><span class="fl">Time</span><input type="time" value="${esc(m.time||'')}" oninput="umed(${i},${mi},'time',this.value)"></div><div class="fr"><span class="fl">Freq</span><select oninput="umed(${i},${mi},'freq',this.value)"><option value="daily" ${(!m.freq||m.freq==='daily')?'selected':''}>Daily</option><option value="twice" ${m.freq==='twice'?'selected':''}>Twice a day</option><option value="asneeded" ${m.freq==='asneeded'?'selected':''}>As needed</option><option value="weekly" ${m.freq==='weekly'?'selected':''}>Weekly</option></select></div>${t2}<div class="fr"><span class="fl">Notes</span><input type="text" value="${esc(m.notes||'')}" placeholder="With food, special instructions..." oninput="umed(${i},${mi},'notes',this.value)"></div></div></div>`;
   });
   const delPersonBtn=S.people.length>1?`<button class="del-person-btn" onclick="delPerson(${i})">Remove this person</button>`:'';
   panel.innerHTML=`<div class="av-row"><div class="av ${AVC[avIdx]}" id="av${i}">${init}</div><input type="text" value="${esc(p.name||'')}" placeholder="Enter name" style="flex:1;border:none;outline:none;font-size:18px;font-weight:600;color:var(--text);background:transparent;font-family:inherit;" oninput="uname(${i},this.value)"></div><div class="slbl">Medications</div>${mh}<button class="add-btn" onclick="addMed(${i})">+ Add Medication</button><button class="save-btn" onclick="saveKid(${i})">Save</button>${delPersonBtn}`;
@@ -527,6 +556,117 @@ function schedMidnight(){const now=new Date();const m=new Date(now);m.setHours(2
     document.head.appendChild(fav);
   } catch(e) {}
 })();
+
+
+// ── CAMERA SCAN ──────────────────────────────────────────────────────────────
+let scanTarget = null; // {pi, mi}
+let scanResultName = null;
+
+function startScan(pi, mi) {
+  scanTarget = {pi, mi};
+  scanResultName = null;
+  document.getElementById('scan-preview').style.display = 'none';
+  document.getElementById('scan-preview').src = '';
+  document.getElementById('scan-status').textContent = 'Opening camera…';
+  document.getElementById('scan-title').textContent = 'Scan pill bottle';
+  document.getElementById('scan-actions').style.display = 'none';
+  document.getElementById('scan-overlay').style.display = 'flex';
+  // Small delay so overlay renders before camera sheet opens
+  setTimeout(() => document.getElementById('cam-input').click(), 120);
+}
+
+function closeScan() {
+  document.getElementById('scan-overlay').style.display = 'none';
+  document.getElementById('cam-input').value = '';
+  scanTarget = null;
+  scanResultName = null;
+}
+
+async function onCamCapture(e) {
+  const file = e.target.files[0];
+  if (!file) { closeScan(); return; }
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const dataUrl = ev.target.result;
+    const preview = document.getElementById('scan-preview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+
+    document.getElementById('scan-title').textContent = 'Reading label…';
+    document.getElementById('scan-status').textContent = '🔍 Asking Claude to read the bottle…';
+    document.getElementById('scan-actions').style.display = 'none';
+
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const mediaType = file.type || 'image/jpeg';
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: mediaType, data: base64 }
+              },
+              {
+                type: 'text',
+                text: 'This is a photo of a prescription or medication bottle label. Extract ONLY the medication/drug name (not the patient name, doctor, instructions, or dosage). Reply with just the medication name, nothing else. If you cannot read a medication name, reply with exactly: UNKNOWN'
+              }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const raw = (data.content?.[0]?.text || '').trim();
+
+      if (!raw || raw === 'UNKNOWN' || raw.toUpperCase() === 'UNKNOWN') {
+        document.getElementById('scan-title').textContent = "Couldn't read label";
+        document.getElementById('scan-status').textContent = "Try again with better lighting or a closer shot.";
+        document.getElementById('scan-actions').style.display = 'flex';
+        document.getElementById('scan-use-btn').style.display = 'none';
+      } else {
+        scanResultName = raw;
+        document.getElementById('scan-title').textContent = 'Found it! 💊';
+        document.getElementById('scan-status').textContent = '→ ' + raw;
+        document.getElementById('scan-actions').style.display = 'flex';
+        document.getElementById('scan-use-btn').style.display = '';
+      }
+    } catch(err) {
+      document.getElementById('scan-title').textContent = 'Something went wrong';
+      document.getElementById('scan-status').textContent = 'Check your connection and try again.';
+      document.getElementById('scan-actions').style.display = 'flex';
+      document.getElementById('scan-use-btn').style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function retryScan() {
+  document.getElementById('cam-input').value = '';
+  document.getElementById('scan-preview').style.display = 'none';
+  document.getElementById('scan-actions').style.display = 'none';
+  document.getElementById('scan-title').textContent = 'Scan pill bottle';
+  document.getElementById('scan-status').textContent = 'Opening camera…';
+  setTimeout(() => document.getElementById('cam-input').click(), 80);
+}
+
+function useScanResult() {
+  if (!scanResultName || !scanTarget) return;
+  const {pi, mi} = scanTarget;
+  S.people[pi].meds[mi].name = scanResultName;
+  saveS();
+  renderKid(pi);
+  closeScan();
+  toast('Medication name filled in ✓');
+}
 
 // INIT
 loadS();
