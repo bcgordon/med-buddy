@@ -276,7 +276,7 @@ function loadS(){try{const d=localStorage.getItem('mb_v3');if(d){const p=JSON.pa
 function saveS(){localStorage.setItem('mb_v3',JSON.stringify(S));}
 function getPin(){return localStorage.getItem('mb_pin_v3')||'1234';}
 function setPin(p){localStorage.setItem('mb_pin_v3',p);}
-function todayKey(){return new Date().toISOString().slice(0,10);}
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function ck(pi,mi){return todayKey()+'|'+pi+'|'+mi;}
 function nk(pi,mi){return pi+'|'+mi;}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -571,7 +571,7 @@ function snapshotDay(dateKey){
   // Prune entries older than 30 days
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const cutoffStr = cutoff.getFullYear()+'-'+String(cutoff.getMonth()+1).padStart(2,'0')+'-'+String(cutoff.getDate()).padStart(2,'0');
   Object.keys(h).forEach(k => { if(k < cutoffStr) delete h[k]; });
 
   // Build snapshot: { "2025-04-15": { "0|0": {name,dose,time,given:true}, ... } }
@@ -599,8 +599,8 @@ function fmtHistDate(dateStr){
   const d = new Date(dateStr + 'T12:00:00');
   const today = new Date();
   const yesterday = new Date(); yesterday.setDate(today.getDate()-1);
-  if(dateStr === today.toISOString().slice(0,10)) return 'Today';
-  if(dateStr === yesterday.toISOString().slice(0,10)) return 'Yesterday';
+  if(dateStr === today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0')) return 'Today';
+  if(dateStr === yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0')) return 'Yesterday';
   return d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
 }
 
