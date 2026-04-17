@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MedBuddy">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#D4537E">
+<link id="apple-touch-icon" rel="apple-touch-icon" sizes="512x512">
 <title>MedBuddy 💊</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -436,6 +437,44 @@ function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;S={p
 
 // MIDNIGHT RESET
 function schedMidnight(){const now=new Date();const m=new Date(now);m.setHours(24,0,5,0);setTimeout(()=>{S.checks={};saveS();renderToday();updateBadge();schedMidnight();},m-now);}
+
+// ICON GENERATION — draws pink background + pill emoji on canvas, injects as apple-touch-icon
+(function(){
+  try {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 512;
+    const ctx = c.getContext('2d');
+    // Pink rounded rect background
+    const r = 112;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(512 - r, 0);
+    ctx.quadraticCurveTo(512, 0, 512, r);
+    ctx.lineTo(512, 512 - r);
+    ctx.quadraticCurveTo(512, 512, 512 - r, 512);
+    ctx.lineTo(r, 512);
+    ctx.quadraticCurveTo(0, 512, 0, 512 - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#D4537E';
+    ctx.fill();
+    // Pill emoji centered
+    ctx.font = '300px Apple Color Emoji, Segoe UI Emoji, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💊', 256, 272);
+    // Inject as apple-touch-icon
+    const dataUrl = c.toDataURL('image/png');
+    const link = document.getElementById('apple-touch-icon');
+    if (link) link.href = dataUrl;
+    // Also set favicon
+    const fav = document.createElement('link');
+    fav.rel = 'icon'; fav.type = 'image/png';
+    fav.href = dataUrl;
+    document.head.appendChild(fav);
+  } catch(e) {}
+})();
 
 // INIT
 loadS();
