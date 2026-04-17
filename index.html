@@ -105,10 +105,13 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 .w0{background:var(--pink-l);color:var(--pink-d);}
 .w1{background:var(--teal-l);color:var(--teal-d);}
 .w2{background:var(--amber-l);color:var(--amber-d);}
+.w3{background:var(--purple-l);color:var(--purple-d);}
+.w4{background:#EAF3DE;color:#27500A;}
+.w5{background:#FFF5F8;color:#72243E;}
 
 /* KIDS */
-.kid-tabs{display:flex;gap:8px;margin-bottom:14px;}
-.ktab{flex:1;padding:11px 4px;background:white;border:1.5px solid #EEECEA;border-radius:14px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);}
+.kid-tabs-old-placeholder{}
+.ktab{min-width:80px;padding:11px 10px;background:white;border:1.5px solid #EEECEA;border-radius:14px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);white-space:nowrap;}
 .ktab.on{background:var(--pink-l);border-color:var(--pink-m);color:var(--pink-d);}
 .kpanel{display:none;}
 .kpanel.on{display:block;}
@@ -117,6 +120,9 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 .av0{background:var(--pink-l);color:var(--pink-d);}
 .av1{background:var(--teal-l);color:var(--teal-d);}
 .av2{background:var(--amber-l);color:var(--amber-d);}
+.av3{background:var(--purple-l);color:var(--purple-d);}
+.av4{background:var(--green-l,#EAF3DE);color:var(--green-d,#27500A);}
+.av5{background:#FFF5F8;color:#72243E;}
 
 .fgrp{background:white;border-radius:16px;border:1px solid #EEECEA;overflow:hidden;margin-bottom:12px;}
 .fr{display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #F5F4F0;}
@@ -135,6 +141,12 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 .add-btn:active{background:#C0EDD9;}
 .save-btn{width:100%;padding:16px;background:var(--pink);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;}
 .save-btn:active{background:var(--pink-d);transform:scale(.98);}
+.add-person-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--pink-l);border:2px dashed var(--pink-m);border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:var(--pink-d);cursor:pointer;width:100%;font-family:inherit;margin-top:8px;}
+.add-person-btn:active{background:#F4C0D1;}
+.del-person-btn{display:block;width:100%;margin-top:10px;padding:12px;background:none;border:1.5px solid var(--red);border-radius:14px;font-size:14px;font-weight:600;color:var(--red);cursor:pointer;font-family:inherit;text-align:center;}
+.del-person-btn:active{background:var(--red-l);}
+.kid-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.kid-tabs::-webkit-scrollbar{display:none;}
 
 /* NOTIF */
 .nbanner{background:var(--purple-l);border:1.5px solid #AFA9EC;border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;}
@@ -213,23 +225,14 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
   <div class="pages">
     <div class="pg on" id="pg-today"><div class="pgpad" id="today-c"></div></div>
     <div class="pg" id="pg-kids">
-      <div class="pgpad">
-        <div class="kid-tabs">
-          <div class="ktab on" id="kt0" onclick="switchKid(0)">Kid 1</div>
-          <div class="ktab" id="kt1" onclick="switchKid(1)">Kid 2</div>
-          <div class="ktab" id="kt2" onclick="switchKid(2)">Kid 3</div>
-        </div>
-        <div id="kp0" class="kpanel on"></div>
-        <div id="kp1" class="kpanel"></div>
-        <div id="kp2" class="kpanel"></div>
-      </div>
+      <div class="pgpad" id="kids-pgpad"></div>
     </div>
     <div class="pg" id="pg-notif"><div class="pgpad" id="notif-c"></div></div>
     <div class="pg" id="pg-settings"><div class="pgpad" id="settings-c"></div></div>
   </div>
   <nav class="nav">
     <div class="ni on" id="nav-today" onclick="goPage('today')"><div class="ni-icon">📋</div><div class="ni-lbl">Today</div><div class="nbadge" id="badge" style="display:none"></div></div>
-    <div class="ni" id="nav-kids" onclick="goPage('kids')"><div class="ni-icon">👶</div><div class="ni-lbl">Kids</div></div>
+    <div class="ni" id="nav-kids" onclick="goPage('kids')"><div class="ni-icon">🧑</div><div class="ni-lbl">People</div></div>
     <div class="ni" id="nav-notif" onclick="goPage('notif')"><div class="ni-icon">🔔</div><div class="ni-lbl">Reminders</div></div>
     <div class="ni" id="nav-settings" onclick="goPage('settings')"><div class="ni-icon">⚙️</div><div class="ni-lbl">Settings</div></div>
   </nav>
@@ -238,14 +241,16 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 <div class="toast" id="toast"></div>
 </div>
 <script>
-let S={people:[{name:'',meds:[]},{name:'',meds:[]},{name:'',meds:[]}],checks:{},notifEnabled:{}};
+let S={people:[{name:'',meds:[]}],checks:{},notifEnabled:{}};
 let pinEntry='';
 let notifTimers=[];
-const AVC=['av0','av1','av2'];
-const WHOC=['w0','w1','w2'];
+let currentKid=0;
+const MAX_PEOPLE=6;
+const AVC=['av0','av1','av2','av3','av4','av5'];
+const WHOC=['w0','w1','w2','w3','w4','w5'];
 const FREQS={daily:'Daily',twice:'Twice/day',asneeded:'As needed',weekly:'Weekly'};
 
-function loadS(){try{const d=localStorage.getItem('mb_v3');if(d){const p=JSON.parse(d);S=Object.assign(S,p);}S.people.forEach(p=>{if(!p.meds)p.meds=[];});if(!S.checks)S.checks={};if(!S.notifEnabled)S.notifEnabled={};}catch(e){}}
+function loadS(){try{const d=localStorage.getItem('mb_v3');if(d){const p=JSON.parse(d);S=Object.assign(S,p);}if(!S.people||!S.people.length)S.people=[{name:'',meds:[]}];S.people.forEach(p=>{if(!p.meds)p.meds=[];});if(!S.checks)S.checks={};if(!S.notifEnabled)S.notifEnabled={};}catch(e){}}
 function saveS(){localStorage.setItem('mb_v3',JSON.stringify(S));}
 function getPin(){return localStorage.getItem('mb_pin_v3')||'1234';}
 function setPin(p){localStorage.setItem('mb_pin_v3',p);}
@@ -270,7 +275,7 @@ function chkPin(){
   if(pinEntry===getPin()){
     document.getElementById('lock').style.display='none';
     document.getElementById('shell').classList.add('on');
-    initTopDate();renderToday();renderKid(0);renderKid(1);renderKid(2);renderNotif();renderSettings();updateBadge();schedNotifs();
+    initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();
   } else {
     udots(true);document.getElementById('perr').textContent='Incorrect PIN — try again';
     setTimeout(()=>{pinEntry='';udots(false);},700);
@@ -279,7 +284,7 @@ function chkPin(){
 function lockApp(){pinEntry='';udots(false);document.getElementById('perr').textContent='';document.getElementById('lock').style.display='flex';document.getElementById('shell').classList.remove('on');}
 
 // NAV
-function goPage(p){['today','kids','notif','settings'].forEach(x=>{document.getElementById('pg-'+x).classList.toggle('on',x===p);document.getElementById('nav-'+x).classList.toggle('on',x===p);});if(p==='notif')renderNotif();if(p==='settings')renderSettings();}
+function goPage(p){['today','kids','notif','settings'].forEach(x=>{document.getElementById('pg-'+x).classList.toggle('on',x===p);document.getElementById('nav-'+x).classList.toggle('on',x===p);});if(p==='kids')renderKidsPage();if(p==='notif')renderNotif();if(p==='settings')renderSettings();}
 
 function initTopDate(){const d=new Date();const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const months=['January','February','March','April','May','June','July','August','September','October','November','December'];document.getElementById('topdate').textContent=days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate();}
 
@@ -308,10 +313,10 @@ function renderToday(){
     sched+=`<div class="sg"><div class="sth"><span class="stlbl">${lbl}</span><div class="stl"></div></div>`;
     grps[lbl].forEach(({m,pi,mi})=>{
       const isDone=!!S.checks[ck(pi,mi)];
-      const pn=S.people[pi].name||'Kid '+(pi+1);
+      const pn=S.people[pi].name||'Person '+(pi+1);
       const init=pn.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
       const detail=[pn,m.dose,m.notes].filter(Boolean).join(' · ');
-      sched+=`<div class="med-row${isDone?' done':''}"><div class="chk${isDone?' on':''}" onclick="toggleChk(${pi},${mi})"><span class="chk-mark">✓</span></div><div class="mi"><div class="mn">${esc(m.name)}</div><div class="md">${esc(detail)}</div></div><div class="mwho ${WHOC[pi]}">${init}</div></div>`;
+      sched+=`<div class="med-row${isDone?' done':''}"><div class="chk${isDone?' on':''}" onclick="toggleChk(${pi},${mi})"><span class="chk-mark">✓</span></div><div class="mi"><div class="mn">${esc(m.name)}</div><div class="md">${esc(detail)}</div></div><div class="mwho ${WHOC[pi%WHOC.length]}">${init}</div></div>`;
     });
     sched+='</div>';
   });
@@ -321,13 +326,44 @@ function toggleChk(pi,mi){const k=ck(pi,mi);if(S.checks[k])delete S.checks[k];el
 function updateBadge(){let n=0;S.people.forEach((p,pi)=>p.meds.forEach((m,mi)=>{if(!m.name||m.name.trim()===''||m.freq==='asneeded')return;if(!S.checks[ck(pi,mi)])n++;}));const b=document.getElementById('badge');if(n>0){b.style.display='block';b.textContent=n;}else b.style.display='none';}
 
 // KIDS
-function switchKid(i){for(let j=0;j<3;j++){document.getElementById('kt'+j).classList.toggle('on',j===i);document.getElementById('kp'+j).classList.toggle('on',j===i);}}
+function renderKidsPage(){
+  const wrap=document.getElementById('kids-pgpad');
+  const n=S.people.length;
+  // Build tabs
+  let tabs='<div class="kid-tabs" id="kid-tabs-row">';
+  S.people.forEach((p,i)=>{
+    const nm=p.name&&p.name.trim()?p.name.trim():'Person '+(i+1);
+    tabs+=`<div class="ktab${i===currentKid?' on':''}" id="kt${i}" onclick="switchKid(${i})">${nm}</div>`;
+  });
+  tabs+='</div>';
+  // Build panels
+  let panels='';
+  S.people.forEach((_,i)=>{ panels+=`<div id="kp${i}" class="kpanel${i===currentKid?' on':''}"></div>`; });
+  // Add person button (if under max)
+  const addPersonBtn=n<MAX_PEOPLE?`<button class="add-person-btn" onclick="addPerson()">+ Add Person</button>`:'';
+  wrap.innerHTML=tabs+panels+addPersonBtn;
+  S.people.forEach((_,i)=>renderKid(i));
+}
+function switchKid(i){
+  currentKid=i;
+  S.people.forEach((_,j)=>{
+    const t=document.getElementById('kt'+j);const p=document.getElementById('kp'+j);
+    if(t)t.classList.toggle('on',j===i);
+    if(p)p.classList.toggle('on',j===i);
+  });
+}
+function addPerson(){
+  if(S.people.length>=MAX_PEOPLE){toast('Maximum 6 people');return;}
+  S.people.push({name:'',meds:[]});
+  currentKid=S.people.length-1;
+  saveS();renderKidsPage();renderToday();renderNotif();updateBadge();
+  toast('Person added!');
+}
 function renderKid(i){
   const p=S.people[i];
   const panel=document.getElementById('kp'+i);
-  const tab=document.getElementById('kt'+i);
-  const nm=p.name&&p.name.trim()?p.name.trim():'Kid '+(i+1);
-  tab.textContent=nm;
+  if(!panel)return;
+  const avIdx=i%AVC.length;
   const init=p.name?p.name.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
   let mh='';
   if(!p.meds.length)mh=`<div style="text-align:center;color:var(--text3);font-size:14px;padding:20px 0 8px;">No medications yet</div>`;
@@ -335,12 +371,26 @@ function renderKid(i){
     const t2=m.freq==='twice'?`<div class="fr"><span class="fl">Time 2</span><input type="time" value="${esc(m.time2||'')}" oninput="umed(${i},${mi},'time2',this.value)"></div>`:'';
     mh+=`<div class="mce"><div class="mce-hdr"><span style="font-size:20px;">💊</span><span class="mce-name">${esc(m.name)||'New medication'}</span><button class="del-btn" onclick="delMed(${i},${mi})">×</button></div><div class="fgrp" style="border-radius:0;border:none;"><div class="fr"><span class="fl">Name</span><input type="text" value="${esc(m.name||'')}" placeholder="Medication name" oninput="umed(${i},${mi},'name',this.value)"></div><div class="fr"><span class="fl">Dose</span><input type="text" value="${esc(m.dose||'')}" placeholder="e.g. 5ml, 1 tablet" oninput="umed(${i},${mi},'dose',this.value)"></div><div class="fr"><span class="fl">Time</span><input type="time" value="${esc(m.time||'')}" oninput="umed(${i},${mi},'time',this.value)"></div><div class="fr"><span class="fl">Freq</span><select oninput="umed(${i},${mi},'freq',this.value)"><option value="daily" ${(!m.freq||m.freq==='daily')?'selected':''}>Daily</option><option value="twice" ${m.freq==='twice'?'selected':''}>Twice a day</option><option value="asneeded" ${m.freq==='asneeded'?'selected':''}>As needed</option><option value="weekly" ${m.freq==='weekly'?'selected':''}>Weekly</option></select></div>${t2}<div class="fr"><span class="fl">Notes</span><input type="text" value="${esc(m.notes||'')}" placeholder="With food, special instructions..." oninput="umed(${i},${mi},'notes',this.value)"></div></div></div>`;
   });
-  panel.innerHTML=`<div class="av-row"><div class="av ${AVC[i]}" id="av${i}">${init}</div><input type="text" value="${esc(p.name||'')}" placeholder="Enter child's name" style="flex:1;border:none;outline:none;font-size:18px;font-weight:600;color:var(--text);background:transparent;font-family:inherit;" oninput="uname(${i},this.value)"></div><div class="slbl">Medications</div>${mh}<button class="add-btn" onclick="addMed(${i})">+ Add Medication</button><button class="save-btn" onclick="saveKid(${i})">Save</button>`;
+  const delPersonBtn=S.people.length>1?`<button class="del-person-btn" onclick="delPerson(${i})">Remove this person</button>`:'';
+  panel.innerHTML=`<div class="av-row"><div class="av ${AVC[avIdx]}" id="av${i}">${init}</div><input type="text" value="${esc(p.name||'')}" placeholder="Enter name" style="flex:1;border:none;outline:none;font-size:18px;font-weight:600;color:var(--text);background:transparent;font-family:inherit;" oninput="uname(${i},this.value)"></div><div class="slbl">Medications</div>${mh}<button class="add-btn" onclick="addMed(${i})">+ Add Medication</button><button class="save-btn" onclick="saveKid(${i})">Save</button>${delPersonBtn}`;
 }
-function uname(i,v){S.people[i].name=v;const init=v?v.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';const a=document.getElementById('av'+i);if(a)a.textContent=init;const t=document.getElementById('kt'+i);if(t)t.textContent=v.trim()||'Kid '+(i+1);}
+function uname(i,v){
+  S.people[i].name=v;
+  const init=v?v.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
+  const a=document.getElementById('av'+i);if(a)a.textContent=init;
+  const t=document.getElementById('kt'+i);if(t)t.textContent=v.trim()||'Person '+(i+1);
+}
 function umed(pi,mi,f,v){S.people[pi].meds[mi][f]=v;if(f==='freq')renderKid(pi);}
 function addMed(i){S.people[i].meds.push({name:'',dose:'',time:'',freq:'daily',notes:''});saveS();renderKid(i);}
 function delMed(i,mi){if(!confirm('Remove this medication?'))return;S.people[i].meds.splice(mi,1);saveS();renderKid(i);renderToday();updateBadge();}
+function delPerson(i){
+  if(S.people.length<=1){toast("Can't remove last person");return;}
+  const nm=S.people[i].name||'Person '+(i+1);
+  if(!confirm('Remove '+nm+' and all their medications?'))return;
+  S.people.splice(i,1);
+  currentKid=Math.min(currentKid,S.people.length-1);
+  saveS();renderKidsPage();renderToday();renderNotif();updateBadge();
+}
 function saveKid(i){saveS();renderToday();renderNotif();updateBadge();schedNotifs();toast('Saved! ✓');}
 
 // NOTIFICATIONS
@@ -353,7 +403,7 @@ function renderNotif(){
   S.people.forEach((p,pi)=>{
     const valid=p.meds.filter(m=>m.name&&m.name.trim()!==''&&m.freq!=='asneeded');
     if(!valid.length)return;any=true;
-    const nm=p.name||'Kid '+(pi+1);
+    const nm=p.name||'Person '+(pi+1);
     const init=nm.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     let items='';
     p.meds.forEach((m,mi)=>{
@@ -362,7 +412,7 @@ function renderNotif(){
       const t2=m.freq==='twice'&&m.time2?' & '+fmtTime(m.time2):'';
       items+=`<div class="nitem"><div class="nitem-info"><div class="nitem-name">${esc(m.name)}</div><div class="nitem-time">${fmtTime(m.time)||'No time set'}${t2} · ${FREQS[m.freq]}</div></div><div class="toggle${isOn?' on':''}" onclick="togNotif(${pi},${mi})" id="ntog${pi}${mi}"></div></div>`;
     });
-    cards+=`<div class="ncard"><div class="ncard-hdr"><div class="nwho ${AVC[pi]}">${init}</div><div class="ncard-title">${esc(nm)}</div></div>${items}</div>`;
+    cards+=`<div class="ncard"><div class="ncard-hdr"><div class="nwho ${AVC[pi%AVC.length]}">${init}</div><div class="ncard-title">${esc(nm)}</div></div>${items}</div>`;
   });
   if(!any)cards=`<div class="empty-state"><div class="empty-icon">🔔</div>Add medications in the Kids tab<br>to set up reminders here.</div>`;
   c.innerHTML=`<div class="nbanner"><span class="nbanner-icon">💡</span><div class="nbanner-txt"><strong>How reminders work</strong>MedBuddy sends a notification at each medication time. For this to work, open in Safari and tap Share (↑) > "Add to Home Screen".</div></div>${btnHtml}<div class="nstatus">${statusMsg}</div><div class="slbl" style="margin-top:12px;">Reminder schedule</div>${cards}`;
@@ -390,7 +440,7 @@ function schedNotifs(){
       const fire=new Date();fire.setHours(h,mn,0,0);
       if(fire<=now)fire.setDate(fire.getDate()+1);
       const tid=setTimeout(()=>{
-        try{new Notification('💊 MedBuddy',{body:`Time for ${m.name} — ${p.name||'Kid '+(pi+1)}${m.dose?' ('+m.dose+')':''}`,tag:'mb'+pi+mi+tf});}catch(e){}
+        try{new Notification('💊 MedBuddy',{body:`Time for ${m.name} — ${p.name||'Person '+(pi+1)}${m.dose?' ('+m.dose+')':''}`,tag:'mb'+pi+mi+tf});}catch(e){}
         schedNotifs();
       },fire-now);
       notifTimers.push(tid);
@@ -433,7 +483,7 @@ function changePin(){
   document.getElementById('np1').value='';document.getElementById('np2').value='';
 }
 function clearChks(){S.checks={};saveS();renderToday();updateBadge();toast("Today's checks cleared");}
-function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;S={people:[{name:'',meds:[]},{name:'',meds:[]},{name:'',meds:[]}],checks:{},notifEnabled:{}};saveS();renderToday();renderKid(0);renderKid(1);renderKid(2);renderNotif();updateBadge();toast('All data cleared');}
+function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;S={people:[{name:'',meds:[]}],checks:{},notifEnabled:{}};currentKid=0;saveS();renderToday();renderKidsPage();renderNotif();updateBadge();toast('All data cleared');}
 
 // MIDNIGHT RESET
 function schedMidnight(){const now=new Date();const m=new Date(now);m.setHours(24,0,5,0);setTimeout(()=>{S.checks={};saveS();renderToday();updateBadge();schedMidnight();},m-now);}
