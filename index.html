@@ -284,6 +284,29 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 .help-table tr:last-child td{border-bottom:none;}
 .help-table tr:nth-child(even) td{background:#FAFAF8;}
 .help-table td:first-child{font-weight:600;color:var(--pink-d);white-space:nowrap;}
+
+/* DISCLAIMER MODAL */
+#disc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+#disc-overlay.on{display:flex;}
+#disc-modal{background:white;width:100%;border-radius:24px 24px 0 0;padding:24px 22px calc(28px + var(--safe-bot));max-height:85%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#app.dark #disc-modal{background:#28272E;}
+.disc-handle{width:36px;height:4px;background:#E0DED8;border-radius:2px;margin:0 auto 20px;}
+#app.dark .disc-handle{background:#48474F;}
+.disc-badge{display:inline-flex;align-items:center;gap:7px;background:var(--amber-l);border:1.5px solid var(--amber);border-radius:20px;padding:5px 14px;margin-bottom:14px;}
+.disc-badge-icon{font-size:14px;}
+.disc-badge-text{font-size:12px;font-weight:700;color:var(--amber-d);letter-spacing:.02em;}
+.disc-title{font-size:19px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.3;}
+.disc-body{font-size:13.5px;color:var(--text2);line-height:1.65;margin-bottom:12px;}
+.disc-body + .disc-body{margin-top:-4px;}
+.disc-divider{height:1px;background:#F0EFEA;margin:14px 0;}
+#app.dark .disc-divider{background:#38373F;}
+.disc-points{list-style:none;padding:0;margin:0 0 18px;}
+.disc-points li{display:flex;gap:10px;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.5;}
+.disc-points li:last-child{margin-bottom:0;}
+.disc-point-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.disc-accept{width:100%;padding:16px;background:var(--pink);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;}
+.disc-accept:active{background:var(--pink-d);transform:scale(.98);}
+.disc-note{font-size:10.5px;color:var(--text3);text-align:center;margin-top:10px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -311,6 +334,26 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
   <div class="hint" id="lk-hint"></div>
   <div class="lk-disclaimer">For personal use only. Not a medical device. Use of this app does not replace professional medical advice. See Settings for full disclaimer.</div>
 </div>
+
+<div id="disc-overlay">
+  <div id="disc-modal">
+    <div class="disc-handle"></div>
+    <div class="disc-badge"><span class="disc-badge-icon">⚠️</span><span class="disc-badge-text">Before you begin</span></div>
+    <div class="disc-title">MedBuddy is a personal convenience tool, not a medical device.</div>
+    <div class="disc-body">Please read and acknowledge the following before using the app:</div>
+    <div class="disc-divider"></div>
+    <ul class="disc-points">
+      <li><span class="disc-point-icon">💊</span><span>MedBuddy is designed to <strong>assist</strong> with medication tracking. It should <strong>not</strong> be your sole method of managing critical medications.</span></li>
+      <li><span class="disc-point-icon">🩺</span><span>Always consult your <strong>healthcare provider</strong> regarding your medication schedule, dosages, and timing.</span></li>
+      <li><span class="disc-point-icon">⏰</span><span>Reminders and checklists in this app may <strong>not fire reliably</strong> in all situations. Do not depend on them alone for time-sensitive medications.</span></li>
+      <li><span class="disc-point-icon">📵</span><span>The creators of MedBuddy accept <strong>no liability</strong> for missed doses, incorrect administration, or any health outcomes from use or non-use of this app.</span></li>
+      <li><span class="disc-point-icon">✅</span><span>By continuing, you confirm you are <strong>solely responsible</strong> for ensuring medications are taken correctly and on time.</span></li>
+    </ul>
+    <button class="disc-accept" onclick="acceptDisclaimer()">I Understand — Continue to MedBuddy</button>
+    <div class="disc-note">This notice is shown once. You can review it anytime under Settings → Disclaimer.</div>
+  </div>
+</div>
+
 
 <div id="shell">
   <div class="topbar">
@@ -371,14 +414,27 @@ function kp(v){
 function udots(err){for(let i=0;i<4;i++){const d=document.getElementById('d'+i);d.classList.toggle('on',!err&&i<pinEntry.length);d.classList.toggle('err',err);}}
 function chkPin(){
   if(pinEntry===getPin()){
-    sessionStorage.setItem('mb_unlocked','1');
-    document.getElementById('lock').style.display='none';
-    document.getElementById('shell').classList.add('on');
-    initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();
+    if(!localStorage.getItem('mb_disc_v1')){
+      // First ever unlock — show disclaimer before entering app
+      document.getElementById('disc-overlay').classList.add('on');
+    } else {
+      enterApp();
+    }
   } else {
     udots(true);document.getElementById('perr').textContent='Incorrect PIN — try again';
     setTimeout(()=>{pinEntry='';udots(false);},700);
   }
+}
+function acceptDisclaimer(){
+  localStorage.setItem('mb_disc_v1','1');
+  document.getElementById('disc-overlay').classList.remove('on');
+  enterApp();
+}
+function enterApp(){
+  sessionStorage.setItem('mb_unlocked','1');
+  document.getElementById('lock').style.display='none';
+  document.getElementById('shell').classList.add('on');
+  initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();
 }
 function lockApp(){pinEntry='';udots(false);document.getElementById('perr').textContent='';sessionStorage.removeItem('mb_unlocked');document.getElementById('lock').style.display='flex';document.getElementById('shell').classList.remove('on');}
 function renderAll(){initTopDate();renderToday();renderKidsPage();renderNotif();renderSettings();updateBadge();schedNotifs();}
@@ -732,7 +788,7 @@ function changePin(){
   document.getElementById('np1').value='';document.getElementById('np2').value='';
 }
 function clearChks(){S.checks={};saveS();renderToday();updateBadge();toast("Today's checks cleared");}
-function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;S={people:[{name:'',meds:[]}],checks:{},notifEnabled:{}};currentKid=0;saveS();localStorage.removeItem('mb_hist_v1');renderToday();renderKidsPage();renderNotif();updateBadge();toast('All data cleared');}
+function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;S={people:[{name:'',meds:[]}],checks:{},notifEnabled:{}};currentKid=0;saveS();localStorage.removeItem('mb_hist_v1');localStorage.removeItem('mb_disc_v1');renderToday();renderKidsPage();renderNotif();updateBadge();toast('All data cleared');}
 
 // DARK MODE
 function applyDark(on){
