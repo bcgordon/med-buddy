@@ -126,6 +126,18 @@ html,body{height:100%;background:#E8E6E0;font-family:-apple-system,BlinkMacSyste
 .hist-med-name{flex:1;font-size:13px;color:var(--text);}
 .hist-med-time{font-size:11px;color:var(--text3);}
 .hist-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;line-height:1.7;}
+.hist-edit-btn{background:none;border:1.5px solid #EEECEA;border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700;color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s;}
+.hist-edit-btn.active{background:var(--pink-l);border-color:var(--pink-m);color:var(--pink-d);}
+.hist-edit-btn:active{transform:scale(.95);}
+.hist-chk{width:26px;height:26px;border-radius:50%;border:2px solid #DDDBD5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:13px;}
+.hist-chk.given{background:var(--teal);border-color:var(--teal);color:white;}
+.hist-chk.missed{background:var(--red-l);border-color:var(--red);color:var(--red);}
+.hist-chk.edit-given{background:var(--teal);border-color:var(--teal);color:white;box-shadow:0 0 0 3px rgba(29,158,117,.2);}
+.hist-chk.edit-missed{background:white;border-color:#DDDBD5;color:var(--text3);}
+#app.dark .hist-edit-btn{border-color:#38373F;}
+#app.dark .hist-edit-btn.active{background:#3A1828;border-color:#8A3358;color:var(--pink-d);}
+#app.dark .hist-chk.edit-missed{background:#28272E;border-color:#48474F;}
+
 .pg.on{display:block;}
 .pgpad{padding:14px 14px 40px;}
 
@@ -982,7 +994,7 @@ function renderHistPerson(c, pi){
 
   if(todayEntries.length){
     const givenToday = todayEntries.filter(e=>e.given).length;
-    html += renderHistDay('Today (live)', todayEntries, givenToday, todayEntries.length);
+    html += renderHistDay('Today (live)', todayEntries, givenToday, todayEntries.length, null);
   }
 
   // Past days from log
@@ -996,7 +1008,7 @@ function renderHistPerson(c, pi){
     const dayEntries = Object.values(h[date]).filter(e => e.personIdx === pi);
     if(!dayEntries.length) return;
     const given = dayEntries.filter(e=>e.given).length;
-    html += renderHistDay(fmtHistDate(date), dayEntries, given, dayEntries.length);
+    html += renderHistDay(fmtHistDate(date), dayEntries, given, dayEntries.length, date);
   });
 
   if(pastDates.filter(d => Object.values(h[d]).some(e=>e.personIdx===pi)).length === 0 && !todayEntries.length){
@@ -1006,31 +1018,84 @@ function renderHistPerson(c, pi){
   c.innerHTML = html;
 }
 
-function renderHistDay(label, entries, given, total){
+function renderHistDay(label, entries, given, total, dateKey){
+  // dateKey present = past logged day (editable); absent = today live view
+  const editable = !!dateKey;
   const allGiven = given === total;
   const noneMissed = given === 0;
-  const scoreClass = allGiven ? 'perfect' : noneMissed && total>0 ? 'missed' : 'partial';
+  const scoreClass = allGiven ? 'perfect' : (noneMissed && total>0) ? 'missed' : 'partial';
   const scoreLabel = allGiven ? '✓ All taken' : `${given}/${total} taken`;
+  const dayId = dateKey ? dateKey.replace(/-/g,'') : 'live';
 
   let rows = '';
-  // Sort by time
-  entries.slice().sort((a,b)=>(a.time||'ZZ').localeCompare(b.time||'ZZ')).forEach(e => {
-    const icon = e.given ? '✅' : '❌';
+  entries.slice().sort((a,b)=>(a.time||'ZZ').localeCompare(b.time||'ZZ')).forEach((e,idx) => {
     const timeStr = e.time ? fmtTime(e.time) : '';
-    rows += `<div class="hist-med-row">
-      <span class="hist-med-icon">${icon}</span>
-      <span class="hist-med-name">${esc(e.name)}${e.dose?' <span style="color:var(--text3);font-size:11px;">'+esc(e.dose)+'</span>':''}</span>
-      ${timeStr?`<span class="hist-med-time">${timeStr}</span>`:''}
-    </div>`;
+    if(editable){
+      const chkClass = e.given ? 'hist-chk edit-given' : 'hist-chk edit-missed';
+      const chkIcon = e.given ? '✓' : '';
+      rows += `<div class="hist-med-row" id="hrow-${dayId}-${idx}">
+        <div class="${chkClass}" id="hchk-${dayId}-${idx}" onclick="toggleHistEntry('${dateKey}',${histViewPerson},${idx},'hchk-${dayId}-${idx}','hscore-${dayId}')">
+          ${chkIcon}
+        </div>
+        <span class="hist-med-name">${esc(e.name)}${e.dose?' <span style="color:var(--text3);font-size:11px;">'+esc(e.dose)+'</span>':''}</span>
+        ${timeStr?`<span class="hist-med-time">${timeStr}</span>`:''}
+      </div>`;
+    } else {
+      const icon = e.given ? '✅' : '❌';
+      rows += `<div class="hist-med-row">
+        <span class="hist-med-icon">${icon}</span>
+        <span class="hist-med-name">${esc(e.name)}${e.dose?' <span style="color:var(--text3);font-size:11px;">'+esc(e.dose)+'</span>':''}</span>
+        ${timeStr?`<span class="hist-med-time">${timeStr}</span>`:''}
+      </div>`;
+    }
   });
+
+  const editBtn = editable
+    ? `<button class="hist-edit-btn active" title="Tap entries to toggle given/missed">Edit</button>`
+    : '';
 
   return `<div class="hist-day">
     <div class="hist-day-hdr">
       <span class="hist-day-date">${label}</span>
-      <span class="hist-day-score ${scoreClass}">${scoreLabel}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="hist-day-score ${scoreClass}" id="hscore-${dayId}">${scoreLabel}</span>
+        ${editBtn}
+      </div>
     </div>
     ${rows}
   </div>`;
+}
+
+function toggleHistEntry(dateKey, pi, entryIdx, chkId, scoreId){
+  const h = getHist();
+  if(!h[dateKey]) return;
+  // Find the entry by sorted index matching how renderHistDay sorts
+  const dayEntries = Object.entries(h[dateKey])
+    .filter(([k,e]) => e.personIdx === pi)
+    .sort((a,b) => (a[1].time||'ZZ').localeCompare(b[1].time||'ZZ'));
+  if(!dayEntries[entryIdx]) return;
+  const [entryKey, entry] = dayEntries[entryIdx];
+  entry.given = !entry.given;
+  h[dateKey][entryKey] = entry;
+  saveHist(h);
+
+  // Update the checkbox visually without full re-render
+  const chk = document.getElementById(chkId);
+  if(chk){
+    chk.className = entry.given ? 'hist-chk edit-given' : 'hist-chk edit-missed';
+    chk.innerHTML = entry.given ? '✓' : '';
+  }
+  // Update the score badge
+  const allForDay = Object.values(h[dateKey]).filter(e => e.personIdx === pi);
+  const givenCount = allForDay.filter(e=>e.given).length;
+  const total = allForDay.length;
+  const scoreEl = document.getElementById(scoreId);
+  if(scoreEl){
+    const allGiven = givenCount === total;
+    const noneMissed = givenCount === 0;
+    scoreEl.className = 'hist-day-score ' + (allGiven ? 'perfect' : (noneMissed && total>0) ? 'missed' : 'partial');
+    scoreEl.textContent = allGiven ? '✓ All taken' : `${givenCount}/${total} taken`;
+  }
 }
 
 // INIT
